@@ -1,8 +1,10 @@
 package com.chervonnaya.orderservice.config;
 
 import com.chervonnaya.orderdto.OrderDTO;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -64,12 +67,30 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, OrderDTO> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.setConcurrency(3);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setCommonErrorHandler(new DefaultErrorHandler(
-            new DeadLetterPublishingRecoverer(kafkaTemplate()),
+            new DeadLetterPublishingRecoverer(kafkaTemplate(), (record, exception) -> new TopicPartition("dead_letters_topic", 0)),
             new FixedBackOff(5000, 5)
         ));
 
         return factory;
+    }
+
+    @Bean
+    public NewTopic newOrdersTopic() {
+        return new NewTopic("new_orders", 3, (short) 1);
+    }
+
+    @Bean
+    public NewTopic dltTopic() {
+        return new NewTopic("dead_letters_topic", 3, (short) 1);
+    }
+
+    @Bean
+    public KafkaAdmin kafkaAdmin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put("bootstrap.servers", bootstrapServers);
+        return new KafkaAdmin(configs);
     }
 }
