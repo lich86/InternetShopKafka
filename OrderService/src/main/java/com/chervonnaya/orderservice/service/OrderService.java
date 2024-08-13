@@ -33,7 +33,8 @@ public class OrderService {
     }
 
     @KafkaListener(topics = {"paid_orders", "shipped_orders"})
-    private void updatePayment(OrderDTO orderDTO, Acknowledgment acknowledgment) {
+    @Transactional
+    protected void updatePayment(OrderDTO orderDTO, Acknowledgment acknowledgment) {
         Long orderId = orderDTO.getId();
         Order order = repository.findById(orderId)
             .orElseThrow(() -> new EntityNotFoundException(String.valueOf(orderId)));

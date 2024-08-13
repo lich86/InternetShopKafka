@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -21,7 +22,8 @@ public class ShipmentService {
     private final ShipmentRepository repository;
 
     @KafkaListener(topics = "paid_orders")
-    private void save(OrderDTO dto, Acknowledgment acknowledgment) {
+    @Transactional
+    protected void save(OrderDTO dto, Acknowledgment acknowledgment) {
         try {
             Shipment shipment = new Shipment();
             shipment.setOrderId(dto.getId());
@@ -42,6 +44,7 @@ public class ShipmentService {
         return new BigDecimal(Math.random() * 100);
     }
 
+    @Transactional
     public Shipment update(ShipmentDTO dto) {
         Long id = dto.getOrderId();
         Shipment shipment = repository.findByOrderId(id)

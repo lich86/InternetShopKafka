@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -19,7 +20,8 @@ public class PaymentService {
     private final PaymentRepository repository;
 
     @KafkaListener(topics = "new_orders")
-    private void save(OrderDTO dto, Acknowledgment acknowledgment) {
+    @Transactional
+    protected void save(OrderDTO dto, Acknowledgment acknowledgment) {
         try {
             Payment payment = new Payment();
             payment.setOrderId(dto.getId());
@@ -38,6 +40,7 @@ public class PaymentService {
         }
     }
 
+    @Transactional
     public Payment update(PaymentDTO dto) {
         Payment payment = repository.findByOrderId(dto.getOrderId())
             .orElseThrow(() -> new EntityNotFoundException(String.valueOf(dto.getOrderId())));
