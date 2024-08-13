@@ -1,6 +1,7 @@
 package com.chervonnaya.paymentservice.config;
 
 import com.chervonnaya.orderdto.OrderDTO;
+import com.chervonnaya.paymentservice.service.RoundRobinPartitioner;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -38,6 +39,7 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configProps.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, RoundRobinPartitioner.class.getName());
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
@@ -54,7 +56,7 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        //configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, OrderDTO.class.getName());
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, OrderDTO.class.getName());
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
