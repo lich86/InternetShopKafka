@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,7 +21,7 @@ public class ShipmentService {
     private final ShipmentRepository repository;
 
     @KafkaListener(topics = "paid_orders")
-    private void save(OrderDTO dto) {
+    private void save(OrderDTO dto, Acknowledgment acknowledgment) {
         try {
             Shipment shipment = new Shipment();
             shipment.setOrderId(dto.getId());
@@ -30,6 +31,7 @@ public class ShipmentService {
             shipment.setShippingCost(calculateShippingCost());
             repository.save(shipment);
             log.info(String.format("Saved new shipment, id: %d", shipment.getOrderId()));
+            acknowledgment.acknowledge();
         } catch (Exception e) {
             log.error(String.format("Unable to save new shipment, orderId: %d", dto.getId()));
             throw new RuntimeException(String.format("Unable to save new shipment, orderId: %d", dto.getId()));
